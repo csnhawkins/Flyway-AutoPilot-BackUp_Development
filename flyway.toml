@@ -14,7 +14,7 @@ provisioner = "backup"
 
 [environments.shadow.resolvers.backup]
 backupVersion = "001"
-backupFilePath = "C:\\Git\\AutoPilot-BackUp-Development\\backups\\AutoBackup_AdventureWorks.bak"
+backupFilePath = "C:\\Git\\AutoPilot-BackUp\\backups\\AutoBackup.bak"
 
   [environments.shadow.resolvers.backup.sqlserver]
   generateWithMove = true
@@ -33,7 +33,7 @@ displayName = "Check (Reporting) database"
 provisioner = "backup"
 
 [environments.Check.resolvers.backup]
-backupFilePath = "C:\\Git\\AutoPilot-BackUp-Development\\backups\\AutoBackup_AdventureWorks.bak"
+backupFilePath = "C:\\Git\\AutoPilot-BackUp\\backups\\AutoBackup.bak"
 backupVersion = "001"
 
   [environments.Check.resolvers.backup.sqlserver]
@@ -42,6 +42,14 @@ backupVersion = "001"
 [environments.Build]
 url = "jdbc:sqlserver://localhost;databaseName=AutoPilotBuild;encrypt=true;integratedSecurity=true;trustServerCertificate=true"
 displayName = "Build database"
+provisioner = "backup"
+
+[environments.Build.resolvers.backup]
+backupFilePath = "C:\\Git\\AutoPilot-BackUp\\backups\\AutoBackup.bak"
+backupVersion = "001"
+
+  [environments.Build.resolvers.backup.sqlserver]
+  generateWithMove = true
 
 [flyway]
 locations = [ "filesystem:migrations" ]
