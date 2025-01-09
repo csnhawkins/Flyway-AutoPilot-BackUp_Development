@@ -122,13 +122,24 @@ stages:
           env:
             FLYWAY_EMAIL: $(FLYWAY_EMAIL)
             FLYWAY_TOKEN: $(FLYWAY_TOKEN)
-        # Step 2 - Ensure the Build Database is cleaned of all objects, meaning the build starts from scratch
+        # Step 2 - Validate build environment
+        - task: PowerShell@2
+          continueOnError: true
+          displayName: 'Validate Build Database State'
+          inputs:
+            targetType: 'inline'
+            script: |
+              flyway validate -environment="$(TARGET_ENVIRONMENT)" -user="$(TARGET_DATABASE_USERNAME)" -password="$(TARGET_DATABASE_PASSWORD)" -configFiles="$(WORKING_DIRECTORY)/flyway.toml" -locations="filesystem:$(WORKING_DIRECTORY)/migrations" "-ignoreMigrationPatterns=*:pending" $(CUSTOM_PARAMETERS)
+              echo "##vso[task.setvariable variable=VALIDATE_RESULT]$LASTEXITCODE"
+          env:
+            FLYWAY_CLEAN_DISABLED: false # This should only be disabled for temporary sandbox databases, like Build
+        # Step 3 - Optionally Clean the Build Database of all objects, if the validate command fails
         - script: |
-            flyway info clean info -environment="$(TARGET_ENVIRONMENT)" -user="$(TARGET_DATABASE_USERNAME)" -password="$(TARGET_DATABASE_PASSWORD)" -configFiles="$(WORKING_DIRECTORY)\flyway.toml" -locations="filesystem:$(WORKING_DIRECTORY)\migrations" $(CUSTOM_PARAMETERS)
+            flyway info clean info -environment="$(TARGET_ENVIRONMENT)" -user="$(TARGET_DATABASE_USERNAME)" -password="$(TARGET_DATABASE_PASSWORD)" -configFiles="$(WORKING_DIRECTORY)/flyway.toml" -locations="filesystem:$(WORKING_DIRECTORY)/migrations" $(CUSTOM_PARAMETERS)
           continueOnError: false
           workingDirectory: '$(WORKING_DIRECTORY)'
           displayName: 'Clean Build DB'
-          condition: and(succeeded(), eq(variables['EXECUTE_BUILD'], true))
+          condition: and(ne(variables['VALIDATE_RESULT'], '0'), eq(variables['EXECUTE_BUILD'], true))
           env:
             FLYWAY_CLEAN_DISABLED: false # This should only be disabled for temporary sandbox databases, like Build
         # Step 3 - Migrate all scripts from the migration folder, to verify they can be deployed against an empty database. This is the quickest way to get feedback about problematic scripts
